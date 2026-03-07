@@ -1,0 +1,12 @@
+[package]
+name = "justpostthings-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+justpostthings-lib = { path = "../justpostthings-lib" }
+clap = { version = "4", features = ["derive"] }
+dotenv = "0.15"
+reqwest = { version = "0.12", features = ["json", "multipart"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

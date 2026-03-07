@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/justpostthings-lib",
+    "crates/justpostthings-cli",
+    "src-tauri",
+]

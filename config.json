@@ -1,0 +1,17 @@
+{
+    "translation_service": "claude-cli",
+    "channels": [
+      {
+        "name": "x",
+        "id": "644c7bcff38c0972be173424",
+        "should_translate": true,
+        "translate": { "from": "Spanish", "to": "English" }
+      },
+      {
+        "name": "linkedin",
+        "id": "6861cf08acfb098c6998bc8e",
+        "should_translate": false
+      }
+    ],
+    "default_post_channels": ["x", "linkedin"]
+  }

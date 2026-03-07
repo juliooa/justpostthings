@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicedozie4u/tauri-config/refs/heads/main/tauri.conf.v2.schema.json",
+  "productName": "justpostthings",
+  "version": "0.1.0",
+  "identifier": "com.justpostthings.app",
+  "build": {
+    "frontendDist": "../ui/dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run --prefix ui dev -- --host",
+    "beforeBuildCommand": "npm run --prefix ui build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "justpostthings",
+        "fullscreen": false,
+        "maximized": true,
+        "resizable": true,
+        "minWidth": 700,
+        "minHeight": 500
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.icns",
+      "icons/icon.png"
+    ]
+  }
+}
