@@ -38,7 +38,7 @@
     <div class="layout">
       <div class="left-column">
         <div class="column-header">
-          <span class="app-title">justpostthings</span>
+          <span class="app-title">JustPostThings</span>
           <button class="new-post-btn" onclick={() => postStore.newPost()}>+ New post</button>
         </div>
         <PostEditor />

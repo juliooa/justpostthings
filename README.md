@@ -1,12 +1,16 @@
 <p align="center">
-  <img src="applogo.png" width="128" height="128" alt="justpostthings logo" />
+  <img src="applogo.png" width="128" height="128" alt="JustPostThings logo" />
 </p>
 
-<h1 align="center">justpostthings</h1>
+<h1 align="center">JustPostThings</h1>
 
 <p align="center">
   A Rust-powered tool for posting content to multiple social media platforms simultaneously via the <a href="https://buffer.com">Buffer</a> API.<br/>
   Available as both a <strong>CLI tool</strong> and a <strong>Tauri desktop app</strong> with a Svelte frontend.
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
 </p>
 
 ## Features
