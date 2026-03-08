@@ -1,19 +1,59 @@
-# justpostthings
+<p align="center">
+  <img src="applogo.png" width="128" height="128" alt="justpostthings logo" />
+</p>
 
-A command-line tool for posting content to multiple social media platforms simultaneously via the [Buffer](https://buffer.com) API. Publish text posts with optional images to X (formerly Twitter) and LinkedIn in a single command.
+<h1 align="center">justpostthings</h1>
+
+<p align="center">
+  A Rust-powered tool for posting content to multiple social media platforms simultaneously via the <a href="https://buffer.com">Buffer</a> API.<br/>
+  Available as both a <strong>CLI tool</strong> and a <strong>Tauri desktop app</strong> with a Svelte frontend.
+</p>
 
 ## Features
 
-- Post text to multiple social media channels at once
-- Attach multiple images via URLs
+- Post text to multiple social media channels at once (X, LinkedIn)
+- Attach multiple images (local files or URLs)
+- Local images auto-uploaded to ImgBB
 - Schedule posts for a specific date/time
-- Override default channels per post
+- Per-channel text translation (Spanish → English, etc.)
+- Editable translation previews before posting
 - Configurable default channels
+- Desktop app with live preview and custom date/time picker
+
+## Architecture
+
+Cargo workspace with three members:
+
+```
+justpostthings/
+├── crates/
+│   ├── justpostthings-lib/       # Shared library (business logic)
+│   │   └── src/
+│   │       ├── lib.rs            # Config types + loader
+│   │       ├── buffer.rs         # Buffer GraphQL API
+│   │       ├── imgbb.rs          # ImgBB image upload
+│   │       ├── translation.rs    # TranslationService trait + factory
+│   │       ├── openai_service.rs # OpenAI provider
+│   │       ├── gemini_service.rs # Google Gemini provider
+│   │       └── claude_service.rs # Claude API + CLI provider
+│   └── justpostthings-cli/       # CLI binary (clap)
+├── src-tauri/                    # Tauri v2 backend
+│   └── src/
+│       ├── main.rs               # App initialization
+│       └── commands.rs           # IPC command handlers
+└── ui/                           # Svelte 5 + Vite frontend
+    └── src/
+        ├── App.svelte
+        ├── components/           # UI components
+        └── lib/                  # Types, API wrappers, stores
+```
 
 ## Prerequisites
 
 - [Rust](https://www.rust-lang.org/tools/install) (edition 2021)
+- [Node.js](https://nodejs.org/) (v20+)
 - A [Buffer](https://buffer.com) account and API key
+- An [ImgBB](https://imgbb.com/) API key (for local image uploads)
 
 ## Setup
 
@@ -27,85 +67,144 @@ A command-line tool for posting content to multiple social media platforms simul
 2. Create a `.env` file in the project root:
 
    ```
-   BUFFER_API_KEY=your_api_key_here
+   BUFFER_API_KEY=your_buffer_api_key
+   IMGBB_API_KEY=your_imgbb_api_key
    ```
 
-3. Create a `config.json` with your channel configuration:
+   Optional keys depending on your translation service:
+
+   ```
+   OPENAI_API_KEY=your_openai_key
+   GEMINI_API_KEY=your_gemini_key
+   ANTHROPIC_API_KEY=your_anthropic_key
+   ```
+
+3. Create a `config.json`:
 
    ```json
    {
+     "translation_service": "claude-cli",
      "channels": [
-       { "name": "x", "id": "your_x_channel_id" },
-       { "name": "linkedin", "id": "your_linkedin_channel_id" }
+       {
+         "name": "x",
+         "id": "your_buffer_channel_id",
+         "should_translate": true,
+         "translate": {
+           "from": "Spanish",
+           "to": "English"
+         }
+       },
+       {
+         "name": "linkedin",
+         "id": "your_buffer_channel_id",
+         "should_translate": false
+       }
      ],
      "default_post_channels": ["x", "linkedin"]
    }
    ```
 
-   Channel IDs can be found in your Buffer account settings.
-
-4. Build the project:
+4. Install dependencies:
 
    ```bash
-   cargo build --release
+   npm install
+   cd ui && npm install
    ```
 
-## Usage
+## Desktop App
+
+### Development
 
 ```bash
-cargo run -- "Your post text here" [OPTIONS]
+npm run tauri:dev
 ```
 
-Or using the built binary:
+This starts the Vite dev server and launches the Tauri window with hot reload.
+
+### Build
 
 ```bash
-./target/release/justpostthings "Your post text here" [OPTIONS]
+npm run tauri:build
+```
+
+Produces a native macOS `.app` bundle (or equivalent for your platform) in `src-tauri/target/release/bundle/`.
+
+### UI Overview
+
+Two-column layout:
+
+- **Left column**: Post editor, image uploader (drag & drop or browse), channel selector, scheduler with custom date/time picker, post button
+- **Right column**: Tabbed preview (one tab per selected channel), translation controls for channels with `should_translate`, status feedback
+
+## CLI
+
+### Build
+
+```bash
+cargo build -p justpostthings-cli --release
+```
+
+### Usage
+
+```bash
+cargo run -p justpostthings-cli -- "Your post text" [OPTIONS]
 ```
 
 ### Options
 
 | Option | Description |
 |---|---|
-| `<TEXT>` | The text content of the post (positional, required) |
-| `--image <URL>` | Image URL to attach (can be repeated for multiple images) |
-| `--schedule <DATETIME>` | Schedule the post for a future time (ISO 8601 format) |
-| `--channels <NAMES>` | Comma-separated list of channels to post to (overrides defaults) |
-| `--config <PATH>` | Path to config file (default: `./config.json`) |
+| `<TEXT>` | Post text (required) |
+| `--image <PATH_OR_URL>` | Image to attach (repeatable) |
+| `--schedule <DATETIME>` | Schedule time (ISO 8601, e.g. `2025-03-15T10:00:00Z`) |
+| `--channels <NAMES>` | Comma-separated channel names (overrides defaults) |
+| `--config <PATH>` | Config file path (default: `./config.json`) |
 
 ### Examples
 
-Post to all default channels:
-
 ```bash
-cargo run -- "Check out my new project!"
+# Post to all default channels
+cargo run -p justpostthings-cli -- "Check out my new project!"
+
+# Post with local and remote images
+cargo run -p justpostthings-cli -- "Launch day!" \
+  --image /path/to/screenshot.png \
+  --image https://example.com/banner.jpg
+
+# Schedule a post
+cargo run -p justpostthings-cli -- "Coming soon!" --schedule "2025-03-15T10:00:00Z"
+
+# Post to specific channels
+cargo run -p justpostthings-cli -- "X-only update" --channels x
 ```
 
-Post with images:
+## Translation Services
 
-```bash
-cargo run -- "New product launch!" --image https://example.com/img1.jpg --image https://example.com/img2.jpg
-```
+The app supports four translation providers, configured via `translation_service` in `config.json`:
 
-Schedule a post:
+| Service | Config Value | Model | Requires |
+|---|---|---|---|
+| OpenAI | `openai` | gpt-4o-mini | `OPENAI_API_KEY` |
+| Google Gemini | `gemini` | gemini-2.0-flash | `GEMINI_API_KEY` |
+| Claude API | `claude-api` | claude-sonnet-4-20250514 | `ANTHROPIC_API_KEY` |
+| Claude CLI | `claude-cli` | (local) | `claude` CLI installed |
 
-```bash
-cargo run -- "Coming soon!" --schedule "2025-03-15T10:00:00Z"
-```
-
-Post to specific channels only:
-
-```bash
-cargo run -- "X-only post" --channels x
-```
-
-Use a custom config file:
-
-```bash
-cargo run -- "My post" --config ./other_config.json
-```
+Each channel can independently enable translation with its own source/target language pair. Translations are previewed and editable in the desktop app before posting.
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `BUFFER_API_KEY` | Yes | Your Buffer API authentication token |
+| `BUFFER_API_KEY` | Yes | Buffer API token |
+| `IMGBB_API_KEY` | Yes | ImgBB API key for image uploads |
+| `OPENAI_API_KEY` | If using OpenAI | OpenAI API key |
+| `GEMINI_API_KEY` | If using Gemini | Google Gemini API key |
+| `ANTHROPIC_API_KEY` | If using Claude API | Anthropic API key |
+
+## Tech Stack
+
+- **Rust** + Tokio, reqwest, serde, clap
+- **Tauri v2** with dialog and filesystem plugins
+- **Svelte 5** with runes (`$state`, `$derived`, `$effect`)
+- **Vite 6** for frontend bundling
+- **TypeScript** for frontend type safety
