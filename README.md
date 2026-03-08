@@ -83,7 +83,13 @@ justpostthings/
    ANTHROPIC_API_KEY=your_anthropic_key
    ```
 
-3. Create a `config.json`:
+3. Copy the example config and edit with your Buffer channel IDs:
+
+   ```bash
+   cp config.example.json config.json
+   ```
+
+   Edit `config.json`:
 
    ```json
    {

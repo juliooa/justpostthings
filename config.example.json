@@ -3,13 +3,13 @@
     "channels": [
       {
         "name": "x",
-        "id": "644c7bcff38c0972be173424",
+        "id": "your_buffer_channel_id",
         "should_translate": true,
         "translate": { "from": "Spanish", "to": "English" }
       },
       {
         "name": "linkedin",
-        "id": "6861cf08acfb098c6998bc8e",
+        "id": "your_buffer_channel_id",
         "should_translate": false
       }
     ],
