@@ -13,6 +13,10 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
 </p>
 
+<p align="center">
+  <img src="screenshot.png" alt="JustPostThings screenshot" width="800" />
+</p>
+
 ## Features
 
 - Post text to multiple social media channels at once (X, LinkedIn)
@@ -22,6 +26,8 @@
 - Per-channel text translation (Spanish → English, etc.)
 - Editable translation previews before posting
 - Configurable default channels
+- Ideas panel for saving and managing post ideas with links
+- Image lightbox for previewing attached images
 - Desktop app with live preview and custom date/time picker
 
 ## Architecture
@@ -49,6 +55,9 @@ justpostthings/
     └── src/
         ├── App.svelte
         ├── components/           # UI components
+        │   ├── IdeasPanel.svelte     # Post ideas sidebar
+        │   ├── ImageLightbox.svelte  # Image preview overlay
+        │   └── ...
         └── lib/                  # Types, API wrappers, stores
 ```
 
@@ -93,7 +102,10 @@ justpostthings/
 
    ```json
    {
-     "translation_service": "claude-cli",
+     "llm_service": {
+       "provider": "claude-cli",
+       "model": "sonnet"
+     },
      "channels": [
        {
          "name": "x",
@@ -141,10 +153,11 @@ Produces a native macOS `.app` bundle (or equivalent for your platform) in `src-
 
 ### UI Overview
 
-Two-column layout:
+Three-column layout:
 
-- **Left column**: Post editor, image uploader (drag & drop or browse), channel selector, scheduler with custom date/time picker, post button
-- **Right column**: Tabbed preview (one tab per selected channel), translation controls for channels with `should_translate`, status feedback
+- **Left sidebar**: Ideas panel for saving and managing post ideas with links — collapsible
+- **Center column**: Post editor, image uploader (drag & drop or browse) with lightbox preview, channel selector, scheduler with custom date/time picker, post button
+- **Right column**: Tabbed preview (one tab per selected channel), translation controls for channels with `should_translate`, posting results and status feedback
 
 ## CLI
 
@@ -190,7 +203,7 @@ cargo run -p justpostthings-cli -- "X-only update" --channels x
 
 ## Translation Services
 
-The app supports four translation providers, configured via `translation_service` in `config.json`:
+The app supports four translation providers, configured via `llm_service` in `config.json` (with `provider` and optional `model` fields):
 
 | Service | Config Value | Model | Requires |
 |---|---|---|---|

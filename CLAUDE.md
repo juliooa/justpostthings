@@ -1,3 +1,7 @@
+# Rules
+
+- Never add a Co-Authored-By line in git commits. Only the user is the author.
+
 # justpostthings
 
 A Rust CLI tool for posting content to multiple social media platforms simultaneously via the **Buffer API**. Supports text with optional images, post scheduling, and per-channel translation.
