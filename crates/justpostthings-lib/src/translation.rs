@@ -36,15 +36,16 @@ pub fn build_shrink_prompt(text: &str, max_chars: usize) -> String {
 
 pub fn create_service(
     name: &str,
+    model: Option<&str>,
     client: reqwest::Client,
 ) -> Result<Box<dyn TranslationService + Send + Sync>, String> {
     match name {
-        "openai" => Ok(Box::new(OpenAIService::new(client)?)),
-        "gemini" => Ok(Box::new(GeminiService::new(client)?)),
-        "claude-api" => Ok(Box::new(ClaudeApiService::new(client)?)),
-        "claude-cli" => Ok(Box::new(ClaudeCliService::new()?)),
+        "openai" => Ok(Box::new(OpenAIService::new(client, model)?)),
+        "gemini" => Ok(Box::new(GeminiService::new(client, model)?)),
+        "claude-api" => Ok(Box::new(ClaudeApiService::new(client, model)?)),
+        "claude-cli" => Ok(Box::new(ClaudeCliService::new(model)?)),
         _ => Err(format!(
-            "Unknown translation service: '{}'. Use 'openai', 'gemini', 'claude-api', or 'claude-cli'.",
+            "Unknown LLM service: '{}'. Use 'openai', 'gemini', 'claude-api', or 'claude-cli'.",
             name
         )),
     }

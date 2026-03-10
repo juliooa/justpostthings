@@ -3,6 +3,7 @@
   import { open } from "@tauri-apps/plugin-dialog";
   import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
   import { postStore } from "../lib/stores/post.svelte";
+  import { lightbox } from "../lib/stores/lightbox.svelte";
   import { readImageBase64 } from "../lib/api";
 
   let isUploading = $state(false);
@@ -92,8 +93,8 @@
         {#each postStore.images as image, i}
           <div class="thumbnail">
             <img src={image.preview} alt="Upload {i + 1}" />
-            <div class="thumbnail-overlay">
-              <button class="remove-btn" onclick={() => postStore.removeImage(i)}>&times;</button>
+            <div class="thumbnail-overlay" onclick={() => lightbox.open(image.preview)}>
+              <button class="remove-btn" onclick={(e) => { e.stopPropagation(); postStore.removeImage(i); }}>&times;</button>
             </div>
           </div>
         {/each}
@@ -195,7 +196,7 @@
     border-radius: var(--radius);
     overflow: hidden;
     border: 1px solid var(--border);
-    cursor: default;
+    cursor: zoom-in;
   }
 
   .thumbnail img {

@@ -9,10 +9,16 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct LlmService {
+    pub provider: String,
+    pub model: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Config {
     pub channels: Vec<Channel>,
     pub default_post_channels: Vec<String>,
-    pub translation_service: Option<String>,
+    pub llm_service: Option<LlmService>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

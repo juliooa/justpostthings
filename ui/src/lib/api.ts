@@ -3,6 +3,7 @@ import type {
   Config,
   ChannelPostResult,
   TranslationResult,
+  Idea,
 } from "./types";
 
 export async function getConfig(): Promise<Config> {
@@ -43,4 +44,20 @@ export async function submitPost(
 
 export async function readImageBase64(filePath: string): Promise<string> {
   return invoke<string>("read_image_base64", { filePath });
+}
+
+export async function listIdeas(): Promise<Idea[]> {
+  return invoke<Idea[]>("list_ideas");
+}
+
+export async function createIdea(content: string): Promise<Idea> {
+  return invoke<Idea>("create_idea", { content });
+}
+
+export async function updateIdea(id: string, content: string): Promise<void> {
+  return invoke<void>("update_idea", { id, content });
+}
+
+export async function deleteIdea(id: string): Promise<void> {
+  return invoke<void>("delete_idea", { id });
 }

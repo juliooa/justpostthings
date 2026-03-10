@@ -6,6 +6,7 @@ use crate::translation::{build_prompt, TranslationService};
 pub struct GeminiService {
     api_key: String,
     client: reqwest::Client,
+    model: String,
 }
 
 #[derive(Deserialize)]
@@ -29,10 +30,11 @@ struct Part {
 }
 
 impl GeminiService {
-    pub fn new(client: reqwest::Client) -> Result<Self, String> {
+    pub fn new(client: reqwest::Client, model: Option<&str>) -> Result<Self, String> {
         let api_key = std::env::var("GEMINI_API_KEY")
             .map_err(|_| "GEMINI_API_KEY not set. Add it to .env or export it.".to_string())?;
-        Ok(Self { api_key, client })
+        let model = model.unwrap_or("gemini-2.0-flash").to_string();
+        Ok(Self { api_key, client, model })
     }
 }
 
@@ -44,8 +46,8 @@ impl TranslationService for GeminiService {
 
     async fn prompt(&self, prompt: &str) -> Result<String, String> {
         let url = format!(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={}",
-            self.api_key
+            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+            self.model, self.api_key
         );
 
         let body = serde_json::json!({

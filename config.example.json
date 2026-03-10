@@ -1,5 +1,8 @@
 {
-    "translation_service": "claude-cli",
+    "llm_service": {
+      "provider": "claude-cli",
+      "model": "sonnet"
+    },
     "channels": [
       {
         "name": "x",

@@ -10,10 +10,15 @@ export interface Channel {
   translate?: TranslateConfig;
 }
 
+export interface LlmService {
+  provider: string;
+  model?: string;
+}
+
 export interface Config {
   channels: Channel[];
   default_post_channels: string[];
-  translation_service?: string;
+  llm_service?: LlmService;
 }
 
 export interface ChannelPostResult {
@@ -32,4 +37,9 @@ export interface ImageItem {
   path: string;
   preview: string; // data URL for local, or the URL itself
   isLocal: boolean;
+}
+
+export interface Idea {
+  id: string;
+  content: string;
 }

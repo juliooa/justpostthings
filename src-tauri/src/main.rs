@@ -13,6 +13,10 @@ fn main() {
             commands::submit_post,
             commands::shrink_text,
             commands::read_image_base64,
+            commands::list_ideas,
+            commands::create_idea,
+            commands::update_idea,
+            commands::delete_idea,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

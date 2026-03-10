@@ -1,5 +1,6 @@
 <script lang="ts">
   import { postStore } from "../lib/stores/post.svelte";
+  import { lightbox } from "../lib/stores/lightbox.svelte";
   import { translatePreview } from "../lib/api";
 
   let activeTab = $state<string>("");
@@ -135,7 +136,7 @@
         {#if postStore.images.length > 0}
           <div class="preview-images">
             {#each postStore.images as image, i}
-              <img src={image.preview} alt="Preview {i + 1}" />
+              <img src={image.preview} alt="Preview {i + 1}" onclick={() => lightbox.open(image.preview)} />
             {/each}
           </div>
         {/if}
@@ -266,6 +267,12 @@
     object-fit: cover;
     border-radius: 8px;
     border: 1px solid var(--border);
+    cursor: zoom-in;
+    transition: border-color 0.15s ease;
+  }
+
+  .preview-images img:hover {
+    border-color: var(--border-strong);
   }
 
   .schedule-badge {

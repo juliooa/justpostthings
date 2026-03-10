@@ -79,19 +79,19 @@ async fn main() {
         }
     };
 
-    // Create translation service lazily
+    // Create LLM service lazily
     let translation_service: Option<Box<dyn translation::TranslationService + Send + Sync>> =
         if selected_channels
             .iter()
             .any(|c| c.should_translate && c.translate.is_some())
         {
-            let service_name = config.translation_service.as_deref().unwrap_or_else(|| {
+            let llm = config.llm_service.as_ref().unwrap_or_else(|| {
                 eprintln!(
-                    "A channel has translation enabled but 'translation_service' is not set in config."
+                    "A channel has translation enabled but 'llm_service' is not set in config."
                 );
                 process::exit(1);
             });
-            match translation::create_service(service_name, client.clone()) {
+            match translation::create_service(&llm.provider, llm.model.as_deref(), client.clone()) {
                 Ok(s) => Some(s),
                 Err(e) => {
                     eprintln!("{}", e);

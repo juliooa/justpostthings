@@ -7,6 +7,7 @@ use crate::translation::{build_prompt, TranslationService};
 pub struct ClaudeApiService {
     api_key: String,
     client: reqwest::Client,
+    model: String,
 }
 
 #[derive(Deserialize)]
@@ -20,10 +21,11 @@ struct ContentBlock {
 }
 
 impl ClaudeApiService {
-    pub fn new(client: reqwest::Client) -> Result<Self, String> {
+    pub fn new(client: reqwest::Client, model: Option<&str>) -> Result<Self, String> {
         let api_key = std::env::var("ANTHROPIC_API_KEY")
             .map_err(|_| "ANTHROPIC_API_KEY not set. Add it to .env or export it.".to_string())?;
-        Ok(Self { api_key, client })
+        let model = model.unwrap_or("claude-sonnet-4-20250514").to_string();
+        Ok(Self { api_key, client, model })
     }
 }
 
@@ -35,7 +37,7 @@ impl TranslationService for ClaudeApiService {
 
     async fn prompt(&self, prompt: &str) -> Result<String, String> {
         let body = serde_json::json!({
-            "model": "claude-sonnet-4-20250514",
+            "model": &self.model,
             "max_tokens": 1024,
             "messages": [
                 { "role": "user", "content": prompt }
@@ -73,16 +75,20 @@ impl TranslationService for ClaudeApiService {
 }
 
 /// Claude via CLI (`claude -p 'prompt'`)
-pub struct ClaudeCliService;
+pub struct ClaudeCliService {
+    model: Option<String>,
+}
 
 impl ClaudeCliService {
-    pub fn new() -> Result<Self, String> {
+    pub fn new(model: Option<&str>) -> Result<Self, String> {
         // Verify the CLI is available
         std::process::Command::new("claude")
             .arg("--version")
             .output()
             .map_err(|_| "claude CLI not found. Install it first.".to_string())?;
-        Ok(Self)
+        Ok(Self {
+            model: model.map(|m| m.to_string()),
+        })
     }
 }
 
@@ -94,10 +100,14 @@ impl TranslationService for ClaudeCliService {
 
     async fn prompt(&self, prompt: &str) -> Result<String, String> {
         let prompt = prompt.to_string();
+        let model = self.model.clone();
         tokio::task::spawn_blocking(move || {
-            let output = std::process::Command::new("claude")
-                .arg("-p")
-                .arg(&prompt)
+            let mut cmd = std::process::Command::new("claude");
+            cmd.arg("-p").arg(&prompt);
+            if let Some(ref model) = model {
+                cmd.arg("--model").arg(model);
+            }
+            let output = cmd
                 .output()
                 .map_err(|e| format!("Failed to run claude CLI: {}", e))?;
 

@@ -6,6 +6,7 @@ use crate::translation::{build_prompt, TranslationService};
 pub struct OpenAIService {
     api_key: String,
     client: reqwest::Client,
+    model: String,
 }
 
 #[derive(Deserialize)]
@@ -24,10 +25,11 @@ struct Message {
 }
 
 impl OpenAIService {
-    pub fn new(client: reqwest::Client) -> Result<Self, String> {
+    pub fn new(client: reqwest::Client, model: Option<&str>) -> Result<Self, String> {
         let api_key = std::env::var("OPENAI_API_KEY")
             .map_err(|_| "OPENAI_API_KEY not set. Add it to .env or export it.".to_string())?;
-        Ok(Self { api_key, client })
+        let model = model.unwrap_or("gpt-4o-mini").to_string();
+        Ok(Self { api_key, client, model })
     }
 }
 
@@ -39,7 +41,7 @@ impl TranslationService for OpenAIService {
 
     async fn prompt(&self, prompt: &str) -> Result<String, String> {
         let body = serde_json::json!({
-            "model": "gpt-4o-mini",
+            "model": &self.model,
             "messages": [
                 { "role": "user", "content": prompt }
             ]

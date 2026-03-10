@@ -9,6 +9,8 @@
   import PostPreview from "./components/PostPreview.svelte";
   import PostButton from "./components/PostButton.svelte";
   import StatusFeedback from "./components/StatusFeedback.svelte";
+  import IdeasPanel from "./components/IdeasPanel.svelte";
+  import ImageLightbox from "./components/ImageLightbox.svelte";
 
   let loading = $state(true);
   let loadError = $state<string | null>(null);
@@ -36,6 +38,8 @@
     <div class="load-error">{loadError}</div>
   {:else}
     <div class="layout">
+      <IdeasPanel />
+      <div class="ideas-divider"></div>
       <div class="left-column">
         <div class="column-header">
           <span class="app-title">JustPostThings</span>
@@ -55,6 +59,8 @@
     </div>
   {/if}
 </main>
+
+<ImageLightbox />
 
 <style>
   main {
@@ -134,11 +140,25 @@
   }
 
   .left-column {
-    flex: 0 0 54%;
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 18px;
     padding-right: 24px;
+  }
+
+  .ideas-divider {
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--border-strong) 15%,
+      var(--border-strong) 85%,
+      transparent
+    );
+    flex-shrink: 0;
+    margin-right: 20px;
   }
 
   .divider {

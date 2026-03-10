@@ -1,6 +1,7 @@
 use justpostthings_lib::{self as lib, buffer, imgbb, translation};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use tauri::Manager;
 
 #[derive(Serialize, Deserialize)]
 pub struct TranslationResult {
@@ -61,7 +62,7 @@ pub async fn translate_preview(
     let client = reqwest::Client::new();
     let mut results = Vec::new();
 
-    let service_name = config.translation_service.as_deref();
+    let llm = config.llm_service.as_ref();
 
     for name in &channel_names {
         let channel = config
@@ -72,10 +73,10 @@ pub async fn translate_preview(
 
         if channel.should_translate {
             if let Some(ref tc) = channel.translate {
-                let svc_name = service_name.ok_or_else(|| {
-                    "translation_service not set in config".to_string()
+                let llm = llm.ok_or_else(|| {
+                    "llm_service not set in config".to_string()
                 })?;
-                let service = translation::create_service(svc_name, client.clone())?;
+                let service = translation::create_service(&llm.provider, llm.model.as_deref(), client.clone())?;
                 let translated = service.translate(&text, &tc.from, &tc.to).await?;
                 results.push(TranslationResult {
                     channel: name.clone(),
@@ -135,11 +136,11 @@ pub async fn submit_post(
 
     let translation_service: Option<Box<dyn translation::TranslationService + Send + Sync>> =
         if needs_translation {
-            let svc_name = config
-                .translation_service
-                .as_deref()
-                .ok_or_else(|| "translation_service not set in config".to_string())?;
-            Some(translation::create_service(svc_name, client.clone())?)
+            let llm = config
+                .llm_service
+                .as_ref()
+                .ok_or_else(|| "llm_service not set in config".to_string())?;
+            Some(translation::create_service(&llm.provider, llm.model.as_deref(), client.clone())?)
         } else {
             None
         };
@@ -171,13 +172,13 @@ pub async fn shrink_text(
     let path = resolve_config_path(config_path);
     let config = lib::load_config(&path)?;
 
-    let svc_name = config
-        .translation_service
-        .as_deref()
-        .ok_or_else(|| "translation_service not set in config".to_string())?;
+    let llm = config
+        .llm_service
+        .as_ref()
+        .ok_or_else(|| "llm_service not set in config".to_string())?;
 
     let client = reqwest::Client::new();
-    let service = translation::create_service(svc_name, client)?;
+    let service = translation::create_service(&llm.provider, llm.model.as_deref(), client)?;
 
     let limit = max_chars.unwrap_or(280);
     let prompt = translation::build_shrink_prompt(&text, limit);
@@ -202,4 +203,88 @@ pub async fn read_image_base64(file_path: String) -> Result<String, String> {
 
     let encoded = base64::engine::general_purpose::STANDARD.encode(&bytes);
     Ok(format!("data:{};base64,{}", mime, encoded))
+}
+
+// --- Ideas ---
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Idea {
+    pub id: String,
+    pub content: String,
+}
+
+fn ideas_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let base = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+    Ok(base.join("ideas"))
+}
+
+#[tauri::command]
+pub async fn list_ideas(app: tauri::AppHandle) -> Result<Vec<Idea>, String> {
+    let dir = ideas_dir(&app)?;
+    if !dir.exists() {
+        return Ok(Vec::new());
+    }
+
+    let mut ideas: Vec<Idea> = std::fs::read_dir(&dir)
+        .map_err(|e| format!("Failed to read ideas dir: {}", e))?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            let path = entry.path();
+            if path.extension()?.to_str()? != "txt" {
+                return None;
+            }
+            let id = path.file_stem()?.to_str()?.to_string();
+            let content = std::fs::read_to_string(&path).ok()?;
+            Some(Idea { id, content })
+        })
+        .collect();
+
+    // Sort newest first
+    ideas.sort_by(|a, b| b.id.cmp(&a.id));
+    Ok(ideas)
+}
+
+#[tauri::command]
+pub async fn create_idea(app: tauri::AppHandle, content: String) -> Result<Idea, String> {
+    let dir = ideas_dir(&app)?;
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("Failed to create ideas dir: {}", e))?;
+
+    let id = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
+        .to_string();
+
+    let path = dir.join(format!("{}.txt", id));
+    std::fs::write(&path, &content)
+        .map_err(|e| format!("Failed to write idea: {}", e))?;
+
+    Ok(Idea { id, content })
+}
+
+#[tauri::command]
+pub async fn update_idea(app: tauri::AppHandle, id: String, content: String) -> Result<(), String> {
+    let dir = ideas_dir(&app)?;
+    let path = dir.join(format!("{}.txt", id));
+    if !path.exists() {
+        return Err(format!("Idea '{}' not found", id));
+    }
+    std::fs::write(&path, &content)
+        .map_err(|e| format!("Failed to update idea: {}", e))?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_idea(app: tauri::AppHandle, id: String) -> Result<(), String> {
+    let dir = ideas_dir(&app)?;
+    let path = dir.join(format!("{}.txt", id));
+    if path.exists() {
+        std::fs::remove_file(&path)
+            .map_err(|e| format!("Failed to delete idea: {}", e))?;
+    }
+    Ok(())
 }
