@@ -62,3 +62,19 @@ cargo build            # Debug build
 cargo build --release  # Release build
 cargo run -- "text"    # Run directly
 ```
+
+## Release Process
+
+When asked to "make a release" or "create a new version":
+
+1. **Determine version bump**: Ask the user if not specified (patch/minor/major).
+2. **Update version** in all 5 files:
+   - `crates/justpostthings-lib/Cargo.toml`
+   - `crates/justpostthings-cli/Cargo.toml`
+   - `src-tauri/Cargo.toml`
+   - `src-tauri/tauri.conf.json`
+   - `package.json`
+3. **Run `cargo check`** to verify the build compiles.
+4. **Commit** all changes with a descriptive message summarizing what changed since the last version.
+5. **Tag** the commit as `v<new_version>` (e.g. `v0.1.2`).
+6. **Push** the commit and tag to origin.
