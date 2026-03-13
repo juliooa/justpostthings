@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { postStore } from "./lib/stores/post.svelte";
-  import { getConfig } from "./lib/api";
+  import { settingsStore } from "./lib/stores/settings.svelte";
   import PostEditor from "./components/PostEditor.svelte";
   import ImageUploader from "./components/ImageUploader.svelte";
   import ChannelSelector from "./components/ChannelSelector.svelte";
@@ -11,39 +11,66 @@
   import StatusFeedback from "./components/StatusFeedback.svelte";
   import IdeasPanel from "./components/IdeasPanel.svelte";
   import ImageLightbox from "./components/ImageLightbox.svelte";
+  import Settings from "./components/Settings.svelte";
 
   let loading = $state(true);
-  let loadError = $state<string | null>(null);
+  let showSettings = $state(false);
+  let missingConfig = $state(false);
 
   onMount(async () => {
-    try {
-      const config = await getConfig();
-      postStore.config = config;
-      postStore.selectedChannels = [...config.default_post_channels];
-    } catch (e) {
-      loadError = `Failed to load config: ${e}`;
-    } finally {
-      loading = false;
+    const hasSettings = await settingsStore.load();
+    if (hasSettings) {
+      postStore.config = settingsStore.config;
+      postStore.selectedChannels = [...settingsStore.config.default_post_channels];
+    } else {
+      missingConfig = true;
+      showSettings = true;
     }
+    loading = false;
   });
+
+  function handleSettingsClose() {
+    showSettings = false;
+    missingConfig = !settingsStore.hasSettings;
+    postStore.config = settingsStore.config;
+    postStore.selectedChannels = [...settingsStore.config.default_post_channels];
+  }
 </script>
 
 <main>
   {#if loading}
     <div class="loading">
       <div class="loading-dot"></div>
-      <span>Loading configuration...</span>
+      <span>Loading...</span>
     </div>
-  {:else if loadError}
-    <div class="load-error">{loadError}</div>
+  {:else if showSettings}
+    <Settings onclose={handleSettingsClose} />
   {:else}
+    {#if missingConfig}
+      <div class="config-warning">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>No config.json found. <button class="link-btn" onclick={() => (showSettings = true)}>Open Settings</button> to configure API keys and channels.</span>
+      </div>
+    {/if}
     <div class="layout">
       <IdeasPanel />
       <div class="ideas-divider"></div>
       <div class="left-column">
         <div class="column-header">
           <span class="app-title">JustPostThings</span>
-          <button class="new-post-btn" onclick={() => postStore.newPost()}>+ New post</button>
+          <div class="header-actions">
+            <button class="icon-btn-header" title="Settings" onclick={() => (showSettings = true)}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
+            <button class="new-post-btn" onclick={() => postStore.newPost()}>+ New post</button>
+          </div>
         </div>
         <PostEditor />
         <ImageUploader />
@@ -70,8 +97,7 @@
     overflow-y: auto;
   }
 
-  .loading,
-  .load-error {
+  .loading {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -96,8 +122,35 @@
     50% { opacity: 1; transform: scale(1.2); }
   }
 
-  .load-error {
-    color: var(--danger);
+  .config-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    font-size: 12.5px;
+    flex-shrink: 0;
+  }
+
+  .config-warning svg {
+    flex-shrink: 0;
+  }
+
+  .link-btn {
+    all: unset;
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .link-btn:hover {
+    color: var(--accent-hover);
   }
 
   .layout {
@@ -111,6 +164,32 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .icon-btn-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .icon-btn-header:hover {
+    border-color: var(--border-strong);
+    color: var(--text-secondary);
+    background: var(--surface-raised);
   }
 
   .new-post-btn {

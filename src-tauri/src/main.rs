@@ -8,6 +8,8 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
+            commands::get_settings,
+            commands::save_settings,
             commands::translate_preview,
             commands::upload_image,
             commands::submit_post,

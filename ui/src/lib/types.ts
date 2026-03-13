@@ -39,6 +39,13 @@ export interface ImageItem {
   isLocal: boolean;
 }
 
+export interface Settings extends Config {
+  buffer_api_key: string;
+  openai_api_key: string;
+  gemini_api_key: string;
+  imgbb_api_key: string;
+}
+
 export interface Idea {
   id: string;
   content: string;

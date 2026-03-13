@@ -1,13 +1,22 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   Config,
+  Settings,
   ChannelPostResult,
   TranslationResult,
   Idea,
 } from "./types";
 
+export async function getSettings(): Promise<Settings> {
+  return invoke<Settings>("get_settings");
+}
+
+export async function saveSettings(settings: Settings): Promise<void> {
+  return invoke<void>("save_settings", { settings });
+}
+
 export async function getConfig(): Promise<Config> {
-  return invoke<Config>("get_config", { configPath: null });
+  return invoke<Config>("get_config");
 }
 
 export async function translatePreview(
@@ -17,7 +26,6 @@ export async function translatePreview(
   return invoke<TranslationResult[]>("translate_preview", {
     text,
     channelNames,
-    configPath: null,
   });
 }
 
@@ -38,12 +46,18 @@ export async function submitPost(
     schedule,
     channelNames,
     textOverrides,
-    configPath: null,
   });
 }
 
 export async function readImageBase64(filePath: string): Promise<string> {
   return invoke<string>("read_image_base64", { filePath });
+}
+
+export async function shrinkText(
+  text: string,
+  maxChars?: number
+): Promise<string> {
+  return invoke<string>("shrink_text", { text, maxChars });
 }
 
 export async function listIdeas(): Promise<Idea[]> {
