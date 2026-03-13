@@ -29,6 +29,8 @@
 - Ideas panel for saving and managing post ideas with links
 - Image lightbox for previewing attached images
 - Desktop app with live preview and custom date/time picker
+- Built-in Settings UI with form editor and raw JSON mode
+- Config stored in app data directory — works from `/Applications`
 
 ## Architecture
 
@@ -55,6 +57,7 @@ justpostthings/
     └── src/
         ├── App.svelte
         ├── components/           # UI components
+        │   ├── Settings.svelte       # Settings form + raw JSON editor
         │   ├── IdeasPanel.svelte     # Post ideas sidebar
         │   ├── ImageLightbox.svelte  # Image preview overlay
         │   └── ...
@@ -77,7 +80,16 @@ justpostthings/
    cd justpostthings
    ```
 
-2. Create a `.env` file in the project root:
+2. Install dependencies:
+
+   ```bash
+   npm install
+   cd ui && npm install
+   ```
+
+### CLI setup
+
+3. Create a `.env` file in the project root:
 
    ```
    BUFFER_API_KEY=your_buffer_api_key
@@ -92,7 +104,7 @@ justpostthings/
    ANTHROPIC_API_KEY=your_anthropic_key
    ```
 
-3. Copy the example config and edit with your Buffer channel IDs:
+4. Copy the example config and edit with your Buffer channel IDs:
 
    ```bash
    cp config.example.json config.json
@@ -126,12 +138,19 @@ justpostthings/
    }
    ```
 
-4. Install dependencies:
+### Desktop app setup
 
-   ```bash
-   npm install
-   cd ui && npm install
+3. On first launch, the Settings page opens automatically. Configure your API keys and channels from the UI (or use the "Edit JSON" toggle to paste raw config).
+
+   The desktop app stores its configuration in the app data directory:
+
    ```
+   ~/Library/Application Support/com.justpostthings.app/
+   ├── config.json   # Same format as CLI config
+   └── .env          # API keys
+   ```
+
+   You can also edit these files directly — they use the same format as the CLI.
 
 ## Desktop App
 
@@ -158,6 +177,8 @@ Three-column layout:
 - **Left sidebar**: Ideas panel for saving and managing post ideas with links — collapsible
 - **Center column**: Post editor, image uploader (drag & drop or browse) with lightbox preview, channel selector, scheduler with custom date/time picker, post button
 - **Right column**: Tabbed preview (one tab per selected channel), translation controls for channels with `should_translate`, posting results and status feedback
+
+A gear icon in the header opens the **Settings** page, where you can configure API keys, channels, default channels, and LLM service. Toggle "Edit JSON" to edit the raw `config.json` directly.
 
 ## CLI
 
