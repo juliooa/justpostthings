@@ -93,7 +93,7 @@ pub async fn translate_preview(
 pub async fn upload_image(file_path: String) -> Result<String, String> {
     load_dotenv();
     let client = reqwest::Client::new();
-    imgbb::upload_image(&client, &file_path).await
+    imgbb::upload_image(&client, &file_path, None).await
 }
 
 #[tauri::command]
@@ -115,7 +115,7 @@ pub async fn submit_post(
     let client = reqwest::Client::new();
 
     // Resolve images
-    let resolved_images = imgbb::resolve_images(&client, &images).await?;
+    let resolved_images = imgbb::resolve_images(&client, &images, schedule.as_deref()).await?;
 
     // Find selected channels
     let selected_channels: Vec<lib::Channel> = channel_names

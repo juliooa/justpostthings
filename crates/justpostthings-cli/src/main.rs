@@ -71,7 +71,7 @@ async fn main() {
     let client = reqwest::Client::new();
 
     // Resolve images
-    let resolved_images = match imgbb::resolve_images(&client, &cli.images).await {
+    let resolved_images = match imgbb::resolve_images(&client, &cli.images, cli.schedule.as_deref()).await {
         Ok(urls) => urls,
         Err(e) => {
             eprintln!("Image resolution failed: {}", e);

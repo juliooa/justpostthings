@@ -1,4 +1,5 @@
 use base64::Engine;
+use chrono::Utc;
 use serde::Deserialize;
 use std::path::Path;
 
@@ -12,7 +13,19 @@ struct ImgbbData {
     url: String,
 }
 
-pub async fn upload_image(client: &reqwest::Client, file_path: &str) -> Result<String, String> {
+fn compute_expiration(schedule: Option<&str>) -> String {
+    let base = match schedule {
+        Some(s) => chrono::DateTime::parse_from_rfc3339(s)
+            .map(|dt| dt.with_timezone(&Utc))
+            .unwrap_or_else(|_| Utc::now()),
+        None => Utc::now(),
+    };
+    let expiry = base + chrono::Duration::minutes(30);
+    let seconds = (expiry - Utc::now()).num_seconds().max(1800);
+    seconds.to_string()
+}
+
+pub async fn upload_image(client: &reqwest::Client, file_path: &str, schedule: Option<&str>) -> Result<String, String> {
     let api_key = std::env::var("IMGBB_API_KEY")
         .map_err(|_| "IMGBB_API_KEY not set. Add it to .env or export it.".to_string())?;
 
@@ -29,7 +42,7 @@ pub async fn upload_image(client: &reqwest::Client, file_path: &str) -> Result<S
     let form = reqwest::multipart::Form::new()
         .text("key", api_key)
         .text("image", encoded)
-        .text("expiration", "600");
+        .text("expiration", compute_expiration(schedule));
 
     let resp = client
         .post("https://api.imgbb.com/1/upload")
@@ -51,13 +64,13 @@ pub async fn upload_image(client: &reqwest::Client, file_path: &str) -> Result<S
     Ok(parsed.data.url)
 }
 
-pub async fn resolve_images(client: &reqwest::Client, images: &[String]) -> Result<Vec<String>, String> {
+pub async fn resolve_images(client: &reqwest::Client, images: &[String], schedule: Option<&str>) -> Result<Vec<String>, String> {
     let mut urls = Vec::new();
     for img in images {
         if img.starts_with("http://") || img.starts_with("https://") {
             urls.push(img.clone());
         } else {
-            let url = upload_image(client, img).await?;
+            let url = upload_image(client, img, schedule).await?;
             urls.push(url);
         }
     }
