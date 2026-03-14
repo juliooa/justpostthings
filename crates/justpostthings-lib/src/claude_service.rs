@@ -76,19 +76,53 @@ impl TranslationService for ClaudeApiService {
 
 /// Claude via CLI (`claude -p 'prompt'`)
 pub struct ClaudeCliService {
+    claude_bin: String,
     model: Option<String>,
 }
 
 impl ClaudeCliService {
     pub fn new(model: Option<&str>) -> Result<Self, String> {
+        let claude_bin = Self::find_claude_binary()
+            .ok_or_else(|| "claude CLI not found. Install it first.".to_string())?;
         // Verify the CLI is available
-        std::process::Command::new("claude")
+        std::process::Command::new(&claude_bin)
             .arg("--version")
             .output()
-            .map_err(|_| "claude CLI not found. Install it first.".to_string())?;
+            .map_err(|_| format!("claude CLI found at {} but failed to run.", claude_bin))?;
         Ok(Self {
+            claude_bin,
             model: model.map(|m| m.to_string()),
         })
+    }
+
+    /// Resolve the claude binary path.
+    /// GUI apps on macOS don't inherit the shell PATH, so we check common locations.
+    fn find_claude_binary() -> Option<String> {
+        // Try bare command first (works in terminals)
+        if std::process::Command::new("claude")
+            .arg("--version")
+            .output()
+            .is_ok()
+        {
+            return Some("claude".to_string());
+        }
+
+        // Common install locations on macOS/Linux
+        let home = std::env::var("HOME").unwrap_or_default();
+        let candidates = [
+            format!("{}/.local/bin/claude", home),
+            format!("{}/.claude/local/claude", home),
+            "/usr/local/bin/claude".to_string(),
+            "/opt/homebrew/bin/claude".to_string(),
+        ];
+
+        for path in &candidates {
+            if std::path::Path::new(path).is_file() {
+                return Some(path.clone());
+            }
+        }
+
+        None
     }
 }
 
@@ -101,8 +135,9 @@ impl TranslationService for ClaudeCliService {
     async fn prompt(&self, prompt: &str) -> Result<String, String> {
         let prompt = prompt.to_string();
         let model = self.model.clone();
+        let claude_bin = self.claude_bin.clone();
         tokio::task::spawn_blocking(move || {
-            let mut cmd = std::process::Command::new("claude");
+            let mut cmd = std::process::Command::new(&claude_bin);
             cmd.arg("-p").arg(&prompt);
             if let Some(ref model) = model {
                 cmd.arg("--model").arg(model);
