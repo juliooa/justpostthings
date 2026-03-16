@@ -12,6 +12,8 @@ class PostStore {
   selectedChannels = $state<string[]>([]);
   scheduleEnabled = $state(false);
   scheduleDatetime = $state("");
+  perChannelSchedule = $state(false);
+  channelSchedules = $state<Record<string, string>>({});
   config = $state<Config | null>(null);
   translations = $state<TranslationResult[]>([]);
   results = $state<ChannelPostResult[]>([]);
@@ -24,8 +26,20 @@ class PostStore {
   }
 
   get schedule(): string | null {
-    if (!this.scheduleEnabled || !this.scheduleDatetime) return null;
+    if (!this.scheduleEnabled || this.perChannelSchedule || !this.scheduleDatetime) return null;
     return new Date(this.scheduleDatetime).toISOString();
+  }
+
+  get scheduleOverrides(): Record<string, string> {
+    if (!this.scheduleEnabled || !this.perChannelSchedule) return {};
+    const overrides: Record<string, string> = {};
+    for (const name of this.selectedChannels) {
+      const dt = this.channelSchedules[name];
+      if (dt) {
+        overrides[name] = new Date(dt).toISOString();
+      }
+    }
+    return overrides;
   }
 
   get imagePaths(): string[] {
@@ -76,6 +90,8 @@ class PostStore {
     this.images = [];
     this.scheduleEnabled = false;
     this.scheduleDatetime = "";
+    this.perChannelSchedule = false;
+    this.channelSchedules = {};
     this.translations = [];
     this.results = [];
     this.error = null;

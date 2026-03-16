@@ -109,6 +109,7 @@ async fn main() {
         &selected_channels,
         &resolved_images,
         &cli.schedule,
+        &std::collections::HashMap::new(),
         translation_service
             .as_ref()
             .map(|s| s.as_ref() as &(dyn translation::TranslationService + Send + Sync)),

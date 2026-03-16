@@ -38,7 +38,8 @@ export async function submitPost(
   images: string[],
   schedule: string | null,
   channelNames: string[],
-  textOverrides: Record<string, string> = {}
+  textOverrides: Record<string, string> = {},
+  scheduleOverrides: Record<string, string> = {}
 ): Promise<ChannelPostResult[]> {
   return invoke<ChannelPostResult[]>("submit_post", {
     text,
@@ -46,7 +47,18 @@ export async function submitPost(
     schedule,
     channelNames,
     textOverrides,
+    scheduleOverrides,
   });
+}
+
+export async function saveSentPost(
+  channelTexts: [string, string][]
+): Promise<void> {
+  return invoke<void>("save_sent_post", { channelTexts });
+}
+
+export async function openPostsFolder(): Promise<void> {
+  return invoke<void>("open_posts_folder");
 }
 
 export async function readImageBase64(filePath: string): Promise<string> {

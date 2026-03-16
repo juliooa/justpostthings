@@ -5,6 +5,7 @@ class SettingsStore {
   channels = $state<Config["channels"]>([]);
   default_post_channels = $state<string[]>([]);
   llm_service = $state<Config["llm_service"]>(undefined);
+  save_sent_posts = $state(true);
   bufferApiKey = $state("");
   openaiApiKey = $state("");
   geminiApiKey = $state("");
@@ -17,6 +18,7 @@ class SettingsStore {
       channels: this.channels,
       default_post_channels: this.default_post_channels,
       llm_service: this.llm_service,
+      save_sent_posts: this.save_sent_posts,
     };
   }
 
@@ -26,6 +28,7 @@ class SettingsStore {
       this.channels = s.channels;
       this.default_post_channels = s.default_post_channels;
       this.llm_service = s.llm_service;
+      this.save_sent_posts = s.save_sent_posts ?? true;
       this.bufferApiKey = s.buffer_api_key;
       this.openaiApiKey = s.openai_api_key;
       this.geminiApiKey = s.gemini_api_key;
@@ -45,6 +48,7 @@ class SettingsStore {
       channels: this.channels,
       default_post_channels: this.default_post_channels,
       llm_service: this.llm_service,
+      save_sent_posts: this.save_sent_posts,
       buffer_api_key: this.bufferApiKey,
       openai_api_key: this.openaiApiKey,
       gemini_api_key: this.geminiApiKey,

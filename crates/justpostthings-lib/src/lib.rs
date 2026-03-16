@@ -8,6 +8,10 @@ pub mod translation;
 use serde::{Deserialize, Serialize};
 use std::fs;
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct LlmService {
     pub provider: String,
@@ -19,6 +23,8 @@ pub struct Config {
     pub channels: Vec<Channel>,
     pub default_post_channels: Vec<String>,
     pub llm_service: Option<LlmService>,
+    #[serde(default = "default_true")]
+    pub save_sent_posts: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

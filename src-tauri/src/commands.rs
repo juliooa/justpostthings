@@ -172,6 +172,7 @@ pub async fn submit_post(
     schedule: Option<String>,
     channel_names: Vec<String>,
     text_overrides: Option<std::collections::HashMap<String, String>>,
+    schedule_overrides: Option<std::collections::HashMap<String, String>>,
 ) -> Result<Vec<lib::ChannelPostResult>, String> {
     let settings = load_settings(&app)?;
     apply_env_vars(&settings);
@@ -212,6 +213,8 @@ pub async fn submit_post(
             None
         };
 
+    let sched_overrides = schedule_overrides.unwrap_or_default();
+
     let results = buffer::post_to_channels(
         &client,
         &api_key,
@@ -219,6 +222,7 @@ pub async fn submit_post(
         &selected_channels,
         &resolved_images,
         &schedule,
+        &sched_overrides,
         translation_service
             .as_ref()
             .map(|s| s.as_ref() as &(dyn translation::TranslationService + Send + Sync)),
@@ -270,6 +274,51 @@ pub async fn read_image_base64(file_path: String) -> Result<String, String> {
 
     let encoded = base64::engine::general_purpose::STANDARD.encode(&bytes);
     Ok(format!("data:{};base64,{}", mime, encoded))
+}
+
+// --- Posts ---
+
+fn posts_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let base = app_data_dir(app)?;
+    Ok(base.join("posts"))
+}
+
+#[tauri::command]
+pub async fn save_sent_post(
+    app: tauri::AppHandle,
+    channel_texts: Vec<(String, String)>,
+) -> Result<(), String> {
+    let dir = posts_dir(&app)?;
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("Failed to create posts dir: {}", e))?;
+
+    let mut content = String::new();
+    for (i, (channel, text)) in channel_texts.iter().enumerate() {
+        if i > 0 {
+            content.push_str("\n-------\n");
+        }
+        content.push_str(&format!("channel: {}\n{}", channel, text));
+    }
+
+    let id = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
+        .to_string();
+
+    let path = dir.join(format!("{}.txt", id));
+    std::fs::write(&path, &content)
+        .map_err(|e| format!("Failed to write post: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn open_posts_folder(app: tauri::AppHandle) -> Result<(), String> {
+    let dir = posts_dir(&app)?;
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("Failed to create posts dir: {}", e))?;
+    open::that(&dir).map_err(|e| format!("Failed to open folder: {}", e))
 }
 
 // --- Ideas ---

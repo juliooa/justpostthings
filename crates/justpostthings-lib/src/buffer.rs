@@ -68,6 +68,7 @@ pub async fn post_to_channels(
     channels: &[Channel],
     images: &[String],
     schedule: &Option<String>,
+    schedule_overrides: &std::collections::HashMap<String, String>,
     translation_service: Option<&(dyn translation::TranslationService + Send + Sync)>,
     text_overrides: &std::collections::HashMap<String, String>,
 ) -> Vec<ChannelPostResult> {
@@ -106,7 +107,11 @@ pub async fn post_to_channels(
         };
 
         eprintln!("[buffer] Text for '{}': {:?}", channel.name, post_text);
-        let variables = build_variables(&post_text, &channel.id, images, schedule);
+        let effective_schedule = schedule_overrides
+            .get(&channel.name)
+            .cloned()
+            .or_else(|| schedule.clone());
+        let variables = build_variables(&post_text, &channel.id, images, &effective_schedule);
         eprintln!("[buffer] Variables: {}", serde_json::to_string_pretty(&variables).unwrap_or_default());
 
         let body = GraphQLRequest {

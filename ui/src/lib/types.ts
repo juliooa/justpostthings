@@ -19,6 +19,7 @@ export interface Config {
   channels: Channel[];
   default_post_channels: string[];
   llm_service?: LlmService;
+  save_sent_posts?: boolean;
 }
 
 export interface ChannelPostResult {

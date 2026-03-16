@@ -1,5 +1,6 @@
 <script lang="ts">
   import { settingsStore } from "../lib/stores/settings.svelte";
+  import { openPostsFolder } from "../lib/api";
   import type { Channel, LlmService, Config } from "../lib/types";
 
   let { onclose }: { onclose: () => void } = $props();
@@ -15,6 +16,7 @@
       channels: settingsStore.channels,
       default_post_channels: settingsStore.default_post_channels,
       llm_service: settingsStore.llm_service,
+      save_sent_posts: settingsStore.save_sent_posts,
     };
     rawJson = JSON.stringify(config, null, 2);
     rawError = null;
@@ -27,6 +29,7 @@
       settingsStore.channels = parsed.channels ?? [];
       settingsStore.default_post_channels = parsed.default_post_channels ?? [];
       settingsStore.llm_service = parsed.llm_service;
+      settingsStore.save_sent_posts = parsed.save_sent_posts ?? false;
       rawError = null;
       rawMode = false;
     } catch (e) {
@@ -41,6 +44,7 @@
         settingsStore.channels = parsed.channels ?? [];
         settingsStore.default_post_channels = parsed.default_post_channels ?? [];
         settingsStore.llm_service = parsed.llm_service;
+        settingsStore.save_sent_posts = parsed.save_sent_posts ?? false;
       } catch (e) {
         rawError = `Invalid JSON: ${e}`;
         return;
@@ -240,6 +244,26 @@
           </div>
         </section>
       {/if}
+
+      <!-- Sent Posts -->
+      <section class="settings-section">
+        <span class="section-label">Sent Posts</span>
+        <div class="sent-posts-row">
+          <label class="toggle-label">
+            <div class="toggle-track" class:active={settingsStore.save_sent_posts}>
+              <input type="checkbox" bind:checked={settingsStore.save_sent_posts} />
+              <div class="toggle-thumb"></div>
+            </div>
+            <span>Save sent posts to disk</span>
+          </label>
+          <button class="btn-open-folder" onclick={() => openPostsFolder()}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Open saved posts
+          </button>
+        </div>
+      </section>
     </div>
   {/if}
 
@@ -646,5 +670,35 @@
   .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .sent-posts-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .btn-open-folder {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-raised);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: "DM Sans", system-ui, sans-serif;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .btn-open-folder:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--accent-subtle);
   }
 </style>

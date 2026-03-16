@@ -1,6 +1,7 @@
 <script lang="ts">
   import { postStore } from "../lib/stores/post.svelte";
-  import { submitPost } from "../lib/api";
+  import { settingsStore } from "../lib/stores/settings.svelte";
+  import { submitPost, saveSentPost } from "../lib/api";
 
   async function handlePost() {
     if (!postStore.canPost) return;
@@ -14,13 +15,22 @@
       for (const t of postStore.translations) {
         overrides[t.channel] = t.translated_text;
       }
-      postStore.results = await submitPost(
+      const results = await submitPost(
         postStore.text,
         postStore.imagePaths,
         postStore.schedule,
         postStore.selectedChannels,
-        overrides
+        overrides,
+        postStore.scheduleOverrides
       );
+      postStore.results = results;
+
+      if (settingsStore.save_sent_posts && results.some((r) => r.success)) {
+        const channelTexts: [string, string][] = results
+          .filter((r) => r.success)
+          .map((r) => [r.channel, overrides[r.channel] ?? postStore.text]);
+        saveSentPost(channelTexts).catch(() => {});
+      }
     } catch (e) {
       postStore.error = `Post failed: ${e}`;
     } finally {
