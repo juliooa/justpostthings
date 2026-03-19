@@ -51,3 +51,8 @@ export interface Idea {
   id: string;
   content: string;
 }
+
+export interface SentPost {
+  id: string;
+  content: string;
+}

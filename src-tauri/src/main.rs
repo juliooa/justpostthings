@@ -16,6 +16,8 @@ fn main() {
             commands::shrink_text,
             commands::read_image_base64,
             commands::save_sent_post,
+            commands::list_sent_posts,
+            commands::delete_sent_post,
             commands::open_posts_folder,
             commands::list_ideas,
             commands::create_idea,

@@ -5,6 +5,7 @@ import type {
   ChannelPostResult,
   TranslationResult,
   Idea,
+  SentPost,
 } from "./types";
 
 export async function getSettings(): Promise<Settings> {
@@ -86,4 +87,12 @@ export async function updateIdea(id: string, content: string): Promise<void> {
 
 export async function deleteIdea(id: string): Promise<void> {
   return invoke<void>("delete_idea", { id });
+}
+
+export async function listSentPosts(): Promise<SentPost[]> {
+  return invoke<SentPost[]>("list_sent_posts");
+}
+
+export async function deleteSentPost(id: string): Promise<void> {
+  return invoke<void>("delete_sent_post", { id });
 }

@@ -12,9 +12,11 @@
   import IdeasPanel from "./components/IdeasPanel.svelte";
   import ImageLightbox from "./components/ImageLightbox.svelte";
   import Settings from "./components/Settings.svelte";
+  import SentPostsPanel from "./components/SentPostsPanel.svelte";
 
   let loading = $state(true);
   let showSettings = $state(false);
+  let showSentPosts = $state(false);
   let missingConfig = $state(false);
 
   onMount(async () => {
@@ -45,6 +47,8 @@
     </div>
   {:else if showSettings}
     <Settings onclose={handleSettingsClose} />
+  {:else if showSentPosts}
+    <SentPostsPanel onclose={() => (showSentPosts = false)} />
   {:else}
     {#if missingConfig}
       <div class="config-warning">
@@ -63,6 +67,12 @@
         <div class="column-header">
           <span class="app-title">JustPostThings</span>
           <div class="header-actions">
+            <button class="icon-btn-header" title="Sent posts" onclick={() => (showSentPosts = true)}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </button>
             <button class="icon-btn-header" title="Settings" onclick={() => (showSettings = true)}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>

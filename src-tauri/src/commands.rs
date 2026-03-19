@@ -313,6 +313,48 @@ pub async fn save_sent_post(
     Ok(())
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SentPost {
+    pub id: String,
+    pub content: String,
+}
+
+#[tauri::command]
+pub async fn list_sent_posts(app: tauri::AppHandle) -> Result<Vec<SentPost>, String> {
+    let dir = posts_dir(&app)?;
+    if !dir.exists() {
+        return Ok(Vec::new());
+    }
+
+    let mut posts: Vec<SentPost> = std::fs::read_dir(&dir)
+        .map_err(|e| format!("Failed to read posts dir: {}", e))?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            let path = entry.path();
+            if path.extension()?.to_str()? != "txt" {
+                return None;
+            }
+            let id = path.file_stem()?.to_str()?.to_string();
+            let content = std::fs::read_to_string(&path).ok()?;
+            Some(SentPost { id, content })
+        })
+        .collect();
+
+    posts.sort_by(|a, b| b.id.cmp(&a.id));
+    Ok(posts)
+}
+
+#[tauri::command]
+pub async fn delete_sent_post(app: tauri::AppHandle, id: String) -> Result<(), String> {
+    let dir = posts_dir(&app)?;
+    let path = dir.join(format!("{}.txt", id));
+    if path.exists() {
+        std::fs::remove_file(&path)
+            .map_err(|e| format!("Failed to delete post: {}", e))?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn open_posts_folder(app: tauri::AppHandle) -> Result<(), String> {
     let dir = posts_dir(&app)?;
