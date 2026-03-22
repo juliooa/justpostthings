@@ -141,13 +141,18 @@
           </div>
         {/if}
 
-        {#if postStore.scheduleEnabled && postStore.scheduleDatetime}
-          <div class="schedule-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            {new Date(postStore.scheduleDatetime).toLocaleString()}
-          </div>
+        {#if postStore.scheduleEnabled}
+          {@const scheduleTime = postStore.perChannelSchedule
+            ? postStore.channelSchedules[activeTab]
+            : postStore.scheduleDatetime}
+          {#if scheduleTime}
+            <div class="schedule-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              {new Date(scheduleTime).toLocaleString()}
+            </div>
+          {/if}
         {/if}
       </div>
     {:else}
