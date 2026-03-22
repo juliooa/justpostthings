@@ -27,7 +27,7 @@
 - Editable translation previews before posting
 - Configurable default channels
 - Ideas panel for saving and managing post ideas with links
-- Image lightbox for previewing attached images
+- Image lightbox with drawing/annotation tools (draw on images before posting)
 - Desktop app with live preview and custom date/time picker
 - Built-in Settings UI with form editor and raw JSON mode
 - Config stored in app data directory — works from `/Applications`
@@ -175,7 +175,7 @@ Produces a native macOS `.app` bundle (or equivalent for your platform) in `src-
 Three-column layout:
 
 - **Left sidebar**: Ideas panel for saving and managing post ideas with links — collapsible
-- **Center column**: Post editor, image uploader (drag & drop or browse) with lightbox preview, channel selector, scheduler with custom date/time picker, post button
+- **Center column**: Post editor, image uploader (drag & drop or browse) with lightbox preview and drawing annotation, channel selector, scheduler with custom date/time picker, post button
 - **Right column**: Tabbed preview (one tab per selected channel), translation controls for channels with `should_translate`, posting results and status feedback
 
 A gear icon in the header opens the **Settings** page, where you can configure API keys, channels, default channels, and LLM service. Toggle "Edit JSON" to edit the raw `config.json` directly.
