@@ -71,12 +71,26 @@ class PostStore {
     }
   }
 
+  tempPaths = $state<string[]>([]);
+
   addImage(item: ImageItem) {
     this.images = [...this.images, item];
   }
 
   removeImage(index: number) {
     this.images = this.images.filter((_, i) => i !== index);
+  }
+
+  replaceImage(index: number, item: ImageItem) {
+    this.images = this.images.map((img, i) => (i === index ? item : img));
+  }
+
+  addTempPath(path: string) {
+    this.tempPaths = [...this.tempPaths, path];
+  }
+
+  clearTempPaths() {
+    this.tempPaths = [];
   }
 
   updateTranslation(channel: string, text: string) {

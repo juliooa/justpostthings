@@ -136,7 +136,7 @@
         {#if postStore.images.length > 0}
           <div class="preview-images">
             {#each postStore.images as image, i}
-              <img src={image.preview} alt="Preview {i + 1}" onclick={() => lightbox.open(image.preview)} />
+              <img src={image.preview} alt="Preview {i + 1}" onclick={() => lightbox.open(image.preview, i)} />
             {/each}
           </div>
         {/if}

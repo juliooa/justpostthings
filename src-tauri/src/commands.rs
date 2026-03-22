@@ -363,6 +363,49 @@ pub async fn open_posts_folder(app: tauri::AppHandle) -> Result<(), String> {
     open::that(&dir).map_err(|e| format!("Failed to open folder: {}", e))
 }
 
+// --- Temp drawing images ---
+
+fn temp_images_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let base = app_data_dir(app)?;
+    Ok(base.join("temp_images"))
+}
+
+#[tauri::command]
+pub async fn save_drawing_image(app: tauri::AppHandle, image_data: String) -> Result<String, String> {
+    use base64::Engine;
+
+    let dir = temp_images_dir(&app)?;
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("Failed to create temp dir: {}", e))?;
+
+    let id = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
+        .to_string();
+
+    let path = dir.join(format!("drawing_{}.png", id));
+
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(&image_data)
+        .map_err(|e| format!("Failed to decode base64: {}", e))?;
+
+    std::fs::write(&path, &bytes)
+        .map_err(|e| format!("Failed to write temp image: {}", e))?;
+
+    Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub async fn delete_temp_image(file_path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&file_path);
+    if path.exists() {
+        std::fs::remove_file(path)
+            .map_err(|e| format!("Failed to delete temp image: {}", e))?;
+    }
+    Ok(())
+}
+
 // --- Ideas ---
 
 #[derive(Serialize, Deserialize, Clone)]

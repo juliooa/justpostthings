@@ -93,7 +93,7 @@
         {#each postStore.images as image, i}
           <div class="thumbnail">
             <img src={image.preview} alt="Upload {i + 1}" />
-            <div class="thumbnail-overlay" onclick={() => lightbox.open(image.preview)}>
+            <div class="thumbnail-overlay" onclick={() => lightbox.open(image.preview, i)}>
               <button class="remove-btn" onclick={(e) => { e.stopPropagation(); postStore.removeImage(i); }}>&times;</button>
             </div>
           </div>

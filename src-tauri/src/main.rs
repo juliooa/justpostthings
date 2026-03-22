@@ -23,6 +23,8 @@ fn main() {
             commands::create_idea,
             commands::update_idea,
             commands::delete_idea,
+            commands::save_drawing_image,
+            commands::delete_temp_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

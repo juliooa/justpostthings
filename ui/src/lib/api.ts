@@ -96,3 +96,11 @@ export async function listSentPosts(): Promise<SentPost[]> {
 export async function deleteSentPost(id: string): Promise<void> {
   return invoke<void>("delete_sent_post", { id });
 }
+
+export async function saveDrawingImage(imageData: string): Promise<string> {
+  return invoke<string>("save_drawing_image", { imageData });
+}
+
+export async function deleteTempImage(filePath: string): Promise<void> {
+  return invoke<void>("delete_temp_image", { filePath });
+}

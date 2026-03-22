@@ -1,7 +1,7 @@
 <script lang="ts">
   import { postStore } from "../lib/stores/post.svelte";
   import { settingsStore } from "../lib/stores/settings.svelte";
-  import { submitPost, saveSentPost } from "../lib/api";
+  import { submitPost, saveSentPost, deleteTempImage } from "../lib/api";
 
   async function handlePost() {
     if (!postStore.canPost) return;
@@ -31,6 +31,12 @@
           .map((r) => [r.channel, overrides[r.channel] ?? postStore.text]);
         saveSentPost(channelTexts).catch(() => {});
       }
+
+      // Clean up temp drawing images after posting
+      for (const tempPath of postStore.tempPaths) {
+        deleteTempImage(tempPath).catch(() => {});
+      }
+      postStore.clearTempPaths();
     } catch (e) {
       postStore.error = `Post failed: ${e}`;
     } finally {
