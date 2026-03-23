@@ -17,5 +17,9 @@ ui/dist/
 .vscode/
 .idea/
 
+# Claude
+CLAUDE.md
+.claude/
+
 # Tauri
 src-tauri/target/
