@@ -9,8 +9,13 @@ struct ImgbbResponse {
 }
 
 #[derive(Deserialize)]
-struct ImgbbData {
+struct ImgbbImage {
     url: String,
+}
+
+#[derive(Deserialize)]
+struct ImgbbData {
+    image: ImgbbImage,
 }
 
 fn compute_expiration(schedule: Option<&str>) -> String {
@@ -20,8 +25,8 @@ fn compute_expiration(schedule: Option<&str>) -> String {
             .unwrap_or_else(|_| Utc::now()),
         None => Utc::now(),
     };
-    let expiry = base + chrono::Duration::minutes(30);
-    let seconds = (expiry - Utc::now()).num_seconds().max(1800);
+    let expiry = base + chrono::Duration::hours(24);
+    let seconds = (expiry - Utc::now()).num_seconds().max(86400);
     seconds.to_string()
 }
 
@@ -61,7 +66,7 @@ pub async fn upload_image(client: &reqwest::Client, file_path: &str, schedule: O
     let parsed: ImgbbResponse = serde_json::from_str(&body)
         .map_err(|e| format!("Failed to parse imgbb response: {} — {}", e, body))?;
 
-    Ok(parsed.data.url)
+    Ok(parsed.data.image.url)
 }
 
 pub async fn resolve_images(client: &reqwest::Client, images: &[String], schedule: Option<&str>) -> Result<Vec<String>, String> {
