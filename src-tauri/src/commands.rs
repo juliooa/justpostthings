@@ -145,7 +145,8 @@ pub async fn translate_preview(
                     "llm_service not set in config".to_string()
                 })?;
                 let service = translation::create_service(&llm.provider, llm.model.as_deref(), client.clone())?;
-                let translated = service.translate(&text, &tc.from, &tc.to).await?;
+                let custom_prompt = config.prompts.as_ref().and_then(|p| p.translation_prompt.as_deref());
+                let translated = service.translate(&text, &tc.from, &tc.to, custom_prompt).await?;
                 results.push(TranslationResult {
                     channel: name.clone(),
                     translated_text: translated,
@@ -214,6 +215,7 @@ pub async fn submit_post(
         };
 
     let sched_overrides = schedule_overrides.unwrap_or_default();
+    let custom_translation_prompt = config.prompts.as_ref().and_then(|p| p.translation_prompt.as_deref());
 
     let results = buffer::post_to_channels(
         &client,
@@ -227,6 +229,7 @@ pub async fn submit_post(
             .as_ref()
             .map(|s| s.as_ref() as &(dyn translation::TranslationService + Send + Sync)),
         &overrides,
+        custom_translation_prompt,
     )
     .await;
 
@@ -252,7 +255,8 @@ pub async fn shrink_text(
     let service = translation::create_service(&llm.provider, llm.model.as_deref(), client)?;
 
     let limit = max_chars.unwrap_or(280);
-    let prompt = translation::build_shrink_prompt(&text, limit);
+    let custom_shrink = config.prompts.as_ref().and_then(|p| p.shrink_prompt.as_deref());
+    let prompt = translation::build_shrink_prompt(&text, limit, custom_shrink);
     service.prompt(&prompt).await
 }
 

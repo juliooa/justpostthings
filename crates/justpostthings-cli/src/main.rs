@@ -102,6 +102,7 @@ async fn main() {
             None
         };
 
+    let custom_translation_prompt = config.prompts.as_ref().and_then(|p| p.translation_prompt.as_deref());
     let results = buffer::post_to_channels(
         &client,
         &api_key,
@@ -114,6 +115,7 @@ async fn main() {
             .as_ref()
             .map(|s| s.as_ref() as &(dyn translation::TranslationService + Send + Sync)),
         &std::collections::HashMap::new(),
+        custom_translation_prompt,
     )
     .await;
 

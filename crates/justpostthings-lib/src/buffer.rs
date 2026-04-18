@@ -71,6 +71,7 @@ pub async fn post_to_channels(
     schedule_overrides: &std::collections::HashMap<String, String>,
     translation_service: Option<&(dyn translation::TranslationService + Send + Sync)>,
     text_overrides: &std::collections::HashMap<String, String>,
+    custom_translation_prompt: Option<&str>,
 ) -> Vec<ChannelPostResult> {
     let mut results = Vec::new();
 
@@ -82,7 +83,7 @@ pub async fn post_to_channels(
             if let Some(ref translate_config) = channel.translate {
                 if let Some(service) = translation_service {
                     match service
-                        .translate(text, &translate_config.from, &translate_config.to)
+                        .translate(text, &translate_config.from, &translate_config.to, custom_translation_prompt)
                         .await
                     {
                         Ok(translated) => translated,

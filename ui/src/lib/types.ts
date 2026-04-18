@@ -15,11 +15,17 @@ export interface LlmService {
   model?: string;
 }
 
+export interface Prompts {
+  translation_prompt?: string;
+  shrink_prompt?: string;
+}
+
 export interface Config {
   channels: Channel[];
   default_post_channels: string[];
   llm_service?: LlmService;
   save_sent_posts?: boolean;
+  prompts?: Prompts;
 }
 
 export interface ChannelPostResult {

@@ -31,8 +31,8 @@ impl ClaudeApiService {
 
 #[async_trait]
 impl TranslationService for ClaudeApiService {
-    async fn translate(&self, text: &str, from: &str, to: &str) -> Result<String, String> {
-        self.prompt(&build_prompt(text, from, to)).await
+    async fn translate(&self, text: &str, from: &str, to: &str, custom_prompt: Option<&str>) -> Result<String, String> {
+        self.prompt(&build_prompt(text, from, to, custom_prompt)).await
     }
 
     async fn prompt(&self, prompt: &str) -> Result<String, String> {
@@ -128,8 +128,8 @@ impl ClaudeCliService {
 
 #[async_trait]
 impl TranslationService for ClaudeCliService {
-    async fn translate(&self, text: &str, from: &str, to: &str) -> Result<String, String> {
-        self.prompt(&build_prompt(text, from, to)).await
+    async fn translate(&self, text: &str, from: &str, to: &str, custom_prompt: Option<&str>) -> Result<String, String> {
+        self.prompt(&build_prompt(text, from, to, custom_prompt)).await
     }
 
     async fn prompt(&self, prompt: &str) -> Result<String, String> {

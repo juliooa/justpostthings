@@ -1,7 +1,7 @@
 <script lang="ts">
   import { settingsStore } from "../lib/stores/settings.svelte";
   import { openPostsFolder } from "../lib/api";
-  import type { Channel, LlmService, Config } from "../lib/types";
+  import type { Channel, LlmService, Config, Prompts } from "../lib/types";
 
   let { onclose }: { onclose: () => void } = $props();
 
@@ -11,12 +11,45 @@
   let rawJson = $state("");
   let rawError = $state<string | null>(null);
 
+  const DEFAULT_TRANSLATION_PROMPT = `Translate the following text from {from} to {to}. Reply with ONLY the translated text, nothing else. No explanations, no quotes, no extra words. Keep the same tone and meaning. Preserve all line breaks and paragraph spacing exactly as in the original. If something from {from} sounds weird in {to}, find a natural way to say it.
+
+{text}`;
+
+  const DEFAULT_SHRINK_PROMPT = `Shorten the following text to fit within {max_chars} characters. Reply with ONLY the shortened text, nothing else. No explanations, no quotes, no extra words. Keep the most important information and the same tone. Preserve line breaks where possible. The result MUST be {max_chars} characters or fewer.
+
+{text}`;
+
+  function getTranslationPrompt(): string {
+    return settingsStore.prompts?.translation_prompt ?? DEFAULT_TRANSLATION_PROMPT;
+  }
+
+  function getShrinkPrompt(): string {
+    return settingsStore.prompts?.shrink_prompt ?? DEFAULT_SHRINK_PROMPT;
+  }
+
+  function updatePrompt(field: keyof Prompts, value: string) {
+    const defaults: Record<keyof Prompts, string> = {
+      translation_prompt: DEFAULT_TRANSLATION_PROMPT,
+      shrink_prompt: DEFAULT_SHRINK_PROMPT,
+    };
+    const current = settingsStore.prompts ?? {};
+    const newVal = value === defaults[field] ? undefined : value;
+    const updated = { ...current, [field]: newVal };
+    // If both are undefined/default, set prompts to undefined
+    if (!updated.translation_prompt && !updated.shrink_prompt) {
+      settingsStore.prompts = undefined;
+    } else {
+      settingsStore.prompts = updated;
+    }
+  }
+
   function enterRawMode() {
     const config: Config = {
       channels: settingsStore.channels,
       default_post_channels: settingsStore.default_post_channels,
       llm_service: settingsStore.llm_service,
       save_sent_posts: settingsStore.save_sent_posts,
+      prompts: settingsStore.prompts,
     };
     rawJson = JSON.stringify(config, null, 2);
     rawError = null;
@@ -30,6 +63,7 @@
       settingsStore.default_post_channels = parsed.default_post_channels ?? [];
       settingsStore.llm_service = parsed.llm_service;
       settingsStore.save_sent_posts = parsed.save_sent_posts ?? false;
+      settingsStore.prompts = parsed.prompts;
       rawError = null;
       rawMode = false;
     } catch (e) {
@@ -45,6 +79,7 @@
         settingsStore.default_post_channels = parsed.default_post_channels ?? [];
         settingsStore.llm_service = parsed.llm_service;
         settingsStore.save_sent_posts = parsed.save_sent_posts ?? false;
+        settingsStore.prompts = parsed.prompts;
       } catch (e) {
         rawError = `Invalid JSON: ${e}`;
         return;
@@ -171,6 +206,33 @@
           <label class="field" style="flex:1">
             <span class="field-label">Model</span>
             <input class="field-input" value={settingsStore.llm_service?.model ?? ""} oninput={(e) => updateLlm({ model: e.currentTarget.value || undefined })} placeholder="e.g. gpt-4o-mini" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Prompts -->
+      <section class="settings-section">
+        <span class="section-label">LLM Prompts</span>
+        <div class="field-group">
+          <label class="field">
+            <span class="field-label">Translation Prompt</span>
+            <span class="field-hint">Use {"{from}"}, {"{to}"}, {"{text}"} as placeholders</span>
+            <textarea
+              class="prompt-textarea"
+              value={getTranslationPrompt()}
+              oninput={(e) => updatePrompt("translation_prompt", e.currentTarget.value)}
+              spellcheck="false"
+            ></textarea>
+          </label>
+          <label class="field">
+            <span class="field-label">Shrink Prompt</span>
+            <span class="field-hint">Use {"{max_chars}"}, {"{text}"} as placeholders</span>
+            <textarea
+              class="prompt-textarea"
+              value={getShrinkPrompt()}
+              oninput={(e) => updatePrompt("shrink_prompt", e.currentTarget.value)}
+              spellcheck="false"
+            ></textarea>
           </label>
         </div>
       </section>
@@ -463,6 +525,33 @@
     background-repeat: no-repeat;
     background-position: right 12px center;
     padding-right: 32px;
+  }
+
+  .field-hint {
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    font-family: "DM Mono", monospace;
+    letter-spacing: 0.2px;
+  }
+
+  .prompt-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12.5px;
+    font-family: "DM Mono", monospace;
+    line-height: 1.5;
+    resize: vertical;
+    transition: border-color 0.15s ease;
+  }
+
+  .prompt-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
   }
 
   .channels-list {

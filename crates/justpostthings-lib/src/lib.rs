@@ -18,6 +18,12 @@ pub struct LlmService {
     pub model: Option<String>,
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct Prompts {
+    pub translation_prompt: Option<String>,
+    pub shrink_prompt: Option<String>,
+}
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Config {
     pub channels: Vec<Channel>,
@@ -25,6 +31,8 @@ pub struct Config {
     pub llm_service: Option<LlmService>,
     #[serde(default = "default_true")]
     pub save_sent_posts: bool,
+    #[serde(default)]
+    pub prompts: Option<Prompts>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
