@@ -51,11 +51,13 @@ pub fn build_variables(
     };
 
     if !images.is_empty() {
+        // As of Buffer's 2026-05-12 schema change, `assets` is `[AssetInput!]!`,
+        // where each AssetInput is a @oneOf with exactly one of image/video/document/link.
         let image_assets: Vec<serde_json::Value> = images
             .iter()
-            .map(|url| serde_json::json!({ "url": url }))
+            .map(|url| serde_json::json!({ "image": { "url": url } }))
             .collect();
-        input["assets"] = serde_json::json!({ "images": image_assets });
+        input["assets"] = serde_json::json!(image_assets);
     }
 
     serde_json::json!({ "input": input })
